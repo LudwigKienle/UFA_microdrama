@@ -1,14 +1,29 @@
 import { Show } from './types';
 
+const EP_DESCRIPTIONS = [
+  'Eine unerwartete Wendung verändert alles.',
+  'Alte Geheimnisse kommen ans Licht.',
+  'Die Spannung steigt ins Unermessliche.',
+  'Ein Moment der Wahrheit naht.',
+  'Nichts ist mehr wie es schien.',
+  'Zwei Herzen, ein Schicksal.',
+  'Der Preis der Wahrheit ist hoch.',
+  'Entscheidungen, die alles verändern.',
+  'Ein letzter Versuch bleibt.',
+  'Die Vergangenheit holt alle ein.',
+];
+
 const generateEpisodes = (showId: string, count: number, customVideos: Record<number, string> = {}) => {
   return Array.from({ length: count }).map((_, i) => ({
     id: `${showId}-ep${i + 1}`,
     showId,
     episodeNumber: i + 1,
     title: `Episode ${i + 1}`,
+    description: EP_DESCRIPTIONS[i % EP_DESCRIPTIONS.length],
+    duration: `${3 + (i % 5)}:${String((i * 13 + 7) % 60).padStart(2, '0')}`,
     thumbnail: `https://picsum.photos/seed/${showId}${i}/400/800`,
     videoUrl: customVideos[i + 1] || 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
-    coinCost: i < 3 ? 0 : 15, // First 3 episodes free
+    coinCost: i < 3 ? 0 : 15,
   }));
 };
 
@@ -17,17 +32,17 @@ export const MOCK_SHOWS: Show[] = [
     id: '1',
     title: 'Secret Baby',
     description: 'Mit Sarah Crumbleg, Paul Böhme und Cara Sander.',
-    coverImage: '/secret-baby.jpg', // Lade das Bild in den "public" Ordner hoch und nenne es "secret-baby.jpg"
+    coverImage: '/secret-baby.jpg',
     views: '2.1M',
     tags: ['Drama', 'Fußball'],
     badge: 'Neu',
-    episodes: generateEpisodes('1', 20, { 2: '/Folge2Zwischenstand.mp4' }),
+    episodes: generateEpisodes('1', 20),
   },
   {
     id: '7',
     title: 'Prison Queen',
     description: 'Eine gefährliche Verführung. Produced by AGNES HERTWIG.',
-    coverImage: '/prison-queen.jpg', // Lade das Bild in den "public" Ordner hoch und nenne es "prison-queen.jpg"
+    coverImage: '/PrisonQueen.png',
     views: '1.2M',
     tags: ['Drama', 'Gefängnis', 'Verführung'],
     badge: 'Neu',
