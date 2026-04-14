@@ -1,0 +1,91 @@
+import { Show } from './types';
+
+const generateEpisodes = (showId: string, count: number, customVideos: Record<number, string> = {}) => {
+  return Array.from({ length: count }).map((_, i) => ({
+    id: `${showId}-ep${i + 1}`,
+    showId,
+    episodeNumber: i + 1,
+    title: `Episode ${i + 1}`,
+    thumbnail: `https://picsum.photos/seed/${showId}${i}/400/800`,
+    videoUrl: customVideos[i + 1] || 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
+    coinCost: i < 3 ? 0 : 15, // First 3 episodes free
+  }));
+};
+
+export const MOCK_SHOWS: Show[] = [
+  {
+    id: '1',
+    title: 'Secret Baby',
+    description: 'Mit Sarah Crumbleg, Paul Böhme und Cara Sander.',
+    coverImage: '/secret-baby.jpg', // Lade das Bild in den "public" Ordner hoch und nenne es "secret-baby.jpg"
+    views: '2.1M',
+    tags: ['Drama', 'Fußball'],
+    badge: 'Neu',
+    episodes: generateEpisodes('1', 20, { 2: '/Folge2Zwischenstand.mp4' }),
+  },
+  {
+    id: '7',
+    title: 'Prison Queen',
+    description: 'Eine gefährliche Verführung. Produced by AGNES HERTWIG.',
+    coverImage: '/prison-queen.jpg', // Lade das Bild in den "public" Ordner hoch und nenne es "prison-queen.jpg"
+    views: '1.2M',
+    tags: ['Drama', 'Gefängnis', 'Verführung'],
+    badge: 'Neu',
+    episodes: generateEpisodes('7', 15),
+  },
+  {
+    id: '2',
+    title: 'Meine Schwester: Die Kriegsherrin',
+    description: 'Verborgene Identität und epische Schlachten.',
+    coverImage: '/kriegsherrin.png',
+    views: '4.6M',
+    tags: ['Verborgene Identität'],
+    badge: 'Demnächst',
+    comingSoon: true,
+    episodes: generateEpisodes('2', 15),
+  },
+  {
+    id: '3',
+    title: 'Eine Liebe zum Bauernpapa',
+    description: 'Romantik auf dem Land.',
+    coverImage: '/bauernpapa.png',
+    views: '7.9M',
+    tags: ['Blitzhochzeit'],
+    badge: 'Demnächst',
+    comingSoon: true,
+    episodes: generateEpisodes('3', 30),
+  },
+  {
+    id: '4',
+    title: 'Du raubst mir den Atem',
+    description: 'Erste Liebe und große Gefühle.',
+    coverImage: '/erste-liebe.png',
+    views: '601.5K',
+    tags: ['Erste Liebe'],
+    badge: 'Demnächst',
+    comingSoon: true,
+    episodes: generateEpisodes('4', 10),
+  },
+  {
+    id: '5',
+    title: 'Zu Weihnachten einen Milliardär finden',
+    description: 'Festliche Romantik.',
+    coverImage: '/weihnachten.png',
+    views: '16.6M',
+    tags: ['Schicksalsliebende'],
+    badge: 'Demnächst',
+    comingSoon: true,
+    episodes: generateEpisodes('5', 12),
+  },
+  {
+    id: '6',
+    title: 'Die Liebe nach dem Lebewohl',
+    description: 'Vertragsliebhaber und mehr.',
+    coverImage: '/lebewohl.png',
+    views: '4.9M',
+    tags: ['Vertragsliebhaber'],
+    badge: 'Demnächst',
+    comingSoon: true,
+    episodes: generateEpisodes('6', 25),
+  },
+];
