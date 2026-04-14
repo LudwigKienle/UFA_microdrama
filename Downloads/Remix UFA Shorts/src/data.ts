@@ -37,10 +37,10 @@ export const MOCK_SHOWS: Show[] = [
     tags: ['Drama', 'Fußball'],
     badge: 'Neu',
     episodes: generateEpisodes('1', 20, {
-      2: '/Folge2Zwischenstand.mp4',
-      3: '/Timeline 2.mov',
-      4: '/Folge4Zwischenstand.mov',
-      6: '/Folge_06.mov',
+      2: 'https://pub-81be455c00f74561bc05d588c8eaf999.r2.dev/Folge2Zwischenstand.mp4',
+      3: 'https://pub-81be455c00f74561bc05d588c8eaf999.r2.dev/Timeline%202.mov',
+      4: 'https://pub-81be455c00f74561bc05d588c8eaf999.r2.dev/Folge4Zwischenstand.mov',
+      6: 'https://pub-81be455c00f74561bc05d588c8eaf999.r2.dev/Folge_06.mov',
     }),
   },
   {
