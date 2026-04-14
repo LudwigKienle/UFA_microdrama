@@ -1,15 +1,16 @@
 import React, { useRef } from 'react';
-import { Settings, ChevronRight, History, Bookmark, CreditCard, Bell, HelpCircle, LogOut, Crown, Zap, Star, Camera } from 'lucide-react';
+import { Settings, ChevronRight, History, Bookmark, CreditCard, Bell, HelpCircle, LogOut, Crown, Zap, Camera } from 'lucide-react';
 import { User } from '../types';
 
 interface ProfileViewProps {
   user: User;
+  streak: number;
   onOpenCoinModal: () => void;
   onOpenVipModal: () => void;
   onUpdateAvatar: (url: string) => void;
 }
 
-export default function ProfileView({ user, onOpenCoinModal, onOpenVipModal, onUpdateAvatar }: ProfileViewProps) {
+export default function ProfileView({ user, streak, onOpenCoinModal, onOpenVipModal, onUpdateAvatar }: ProfileViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarClick = () => fileInputRef.current?.click();
@@ -150,9 +151,9 @@ export default function ProfileView({ user, onOpenCoinModal, onOpenVipModal, onU
             <span className="text-gray-500 text-[10px] text-center leading-tight mt-0.5">Ge-<br/>merkt</span>
           </div>
           <div className="bg-gray-900/80 rounded-2xl p-4 flex flex-col items-center border border-white/5">
-            <Star className="w-5 h-5 text-yellow-400 mb-2" />
-            <span className="text-white font-black text-xl">2</span>
-            <span className="text-gray-500 text-[10px] text-center leading-tight mt-0.5">Level</span>
+            <span className="text-xl mb-1">🔥</span>
+            <span className="text-white font-black text-xl">{streak}</span>
+            <span className="text-gray-500 text-[10px] text-center leading-tight mt-0.5">Tage-<br/>Streak</span>
           </div>
         </div>
 

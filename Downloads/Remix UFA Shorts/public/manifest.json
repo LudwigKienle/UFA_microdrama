@@ -1,0 +1,13 @@
+{
+  "name": "UFA Shorts",
+  "short_name": "UFA Shorts",
+  "description": "Packende Kurzserien direkt auf deinem Handy",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#003865",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/secret-baby.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any maskable" }
+  ]
+}

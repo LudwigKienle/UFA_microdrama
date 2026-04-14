@@ -19,12 +19,31 @@ const CATEGORIES = [
   { id: 'forhim',  label: 'FÜR IHN', icon: null },
 ];
 
+// ── Skeleton Card ─────────────────────────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <div className="flex flex-col">
+      <div
+        className="aspect-[3/4] rounded-xl mb-2 bg-gray-800"
+        style={{ animation: 'skeleton-pulse 1.4s ease-in-out infinite' }}
+      />
+      <div className="h-3 bg-gray-800 rounded w-3/4 mb-1.5" style={{ animation: 'skeleton-pulse 1.4s ease-in-out infinite 0.1s' }} />
+      <div className="h-2.5 bg-gray-800 rounded w-1/2"     style={{ animation: 'skeleton-pulse 1.4s ease-in-out infinite 0.2s' }} />
+    </div>
+  );
+}
+
 export default function HomeView({ shows, onSelectShow, watchProgress, userRatings, onOpenVipModal }: HomeViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('popular');
-  const [notified, setNotified] = useState<Set<string>>(new Set());
-  const [ringing, setRinging] = useState<Set<string>>(new Set());
+  const [notified, setNotified]   = useState<Set<string>>(new Set());
+  const [ringing, setRinging]     = useState<Set<string>>(new Set());
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  // Brief delay so skeletons flash for at least one frame
+  useEffect(() => { const t = setTimeout(() => setIsReady(true), 100); return () => clearTimeout(t); }, []);
 
   const filteredShows = shows.filter(show =>
     show.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -50,6 +69,8 @@ export default function HomeView({ shows, onSelectShow, watchProgress, userRatin
     const t = setTimeout(() => setToast(null), 2500);
     return () => clearTimeout(t);
   }, [toast]);
+
+  const markLoaded = (id: string) => setLoadedImages(prev => new Set(prev).add(id));
 
   return (
     <div className="h-full flex flex-col overflow-y-auto bg-black pb-20 scrollbar-hide">
@@ -122,30 +143,32 @@ export default function HomeView({ shows, onSelectShow, watchProgress, userRatin
           style={{ height: '200px' }}
           onClick={() => onSelectShow(featuredShow)}
         >
-          <img src={featuredShow.coverImage} alt={featuredShow.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          {/* Skeleton while loading */}
+          {!loadedImages.has('hero') && (
+            <div className="absolute inset-0 bg-gray-800" style={{ animation: 'skeleton-pulse 1.4s ease-in-out infinite' }} />
+          )}
+          <img
+            src={featuredShow.coverImage}
+            alt={featuredShow.title}
+            className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${loadedImages.has('hero') ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => markLoaded('hero')}
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
 
           {featuredShow.badge && (
             <div className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-md">{featuredShow.badge}</div>
           )}
-
-          {/* Watch progress bar on hero */}
           {watchProgress[featuredShow.id] != null && (
             <div className="absolute bottom-0 inset-x-0 h-1 bg-white/20">
-              <div
-                className="h-full bg-[#00a0e9]"
-                style={{ width: `${((watchProgress[featuredShow.id] + 1) / featuredShow.episodes.length) * 100}%` }}
-              />
+              <div className="h-full bg-[#00a0e9]" style={{ width: `${((watchProgress[featuredShow.id] + 1) / featuredShow.episodes.length) * 100}%` }} />
             </div>
           )}
-
           <div className="absolute bottom-2 left-0 p-4 pr-28">
             <p className="text-[#00a0e9] text-xs font-bold uppercase tracking-widest mb-1">Featured</p>
             <h2 className="text-white font-black text-xl leading-tight line-clamp-2 mb-1">{featuredShow.title}</h2>
             <div className="flex items-center gap-2">
               <p className="text-gray-300 text-xs line-clamp-1">{featuredShow.tags.join(' · ')}</p>
-              {/* Star rating on hero */}
               {userRatings[featuredShow.id] != null && (
                 <div className="flex items-center gap-0.5">
                   {[1,2,3,4,5].map(n => (
@@ -155,7 +178,6 @@ export default function HomeView({ shows, onSelectShow, watchProgress, userRatin
               )}
             </div>
           </div>
-
           <button
             onClick={(e) => { e.stopPropagation(); onSelectShow(featuredShow); }}
             className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-white text-black font-bold text-xs px-3 py-2 rounded-full shadow-lg"
@@ -168,11 +190,15 @@ export default function HomeView({ shows, onSelectShow, watchProgress, userRatin
 
       {/* Grid */}
       <div className="grid grid-cols-2 gap-3 px-3">
-        {filteredShows.length > 0 ? (
+        {!isReady ? (
+          // Skeleton placeholders on first load
+          Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+        ) : filteredShows.length > 0 ? (
           filteredShows.map((show, index) => {
-            const lastEpIdx = watchProgress[show.id];
+            const lastEpIdx  = watchProgress[show.id];
             const progressPct = lastEpIdx != null ? ((lastEpIdx + 1) / show.episodes.length) * 100 : 0;
-            const rating = userRatings[show.id];
+            const rating      = userRatings[show.id];
+            const imgLoaded   = loadedImages.has(show.id);
 
             return (
               <div
@@ -180,11 +206,16 @@ export default function HomeView({ shows, onSelectShow, watchProgress, userRatin
                 className="flex flex-col group cursor-pointer"
                 onClick={() => !show.comingSoon && onSelectShow(show)}
               >
-                <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-2 bg-gray-900">
+                <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-2 bg-gray-800">
+                  {/* Skeleton overlay */}
+                  {!imgLoaded && (
+                    <div className="absolute inset-0 bg-gray-800" style={{ animation: 'skeleton-pulse 1.4s ease-in-out infinite' }} />
+                  )}
                   <img
                     src={show.coverImage}
                     alt={show.title}
-                    className={`w-full h-full object-cover transition-transform duration-300 ${!show.comingSoon ? 'group-hover:scale-105' : ''}`}
+                    className={`w-full h-full object-cover transition-all duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'} ${!show.comingSoon ? 'group-hover:scale-105' : ''}`}
+                    onLoad={() => markLoaded(show.id)}
                   />
 
                   {/* Ranking badge */}
@@ -194,14 +225,12 @@ export default function HomeView({ shows, onSelectShow, watchProgress, userRatin
                     </div>
                   )}
 
-                  {/* Status Badge */}
                   {show.badge && !(activeCategory === 'ranking' && index < 3) && (
                     <div className={`absolute top-2 left-2 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md ${show.comingSoon ? 'bg-gray-700' : 'bg-red-600'}`}>
                       {show.badge}
                     </div>
                   )}
 
-                  {/* "Demnächst" → Notify button */}
                   {show.comingSoon && (
                     <button
                       onClick={(e) => handleNotify(e, show)}
@@ -209,12 +238,11 @@ export default function HomeView({ shows, onSelectShow, watchProgress, userRatin
                     >
                       {notified.has(show.id)
                         ? <BellRing className="w-4 h-4 text-[#00a0e9]" style={ringing.has(show.id) ? { animation: 'bell-ring 0.7s ease-out' } : {}} />
-                        : <Bell className="w-4 h-4 text-white" style={ringing.has(show.id) ? { animation: 'bell-ring 0.7s ease-out' } : {}} />
+                        : <Bell    className="w-4 h-4 text-white"      style={ringing.has(show.id) ? { animation: 'bell-ring 0.7s ease-out' } : {}} />
                       }
                     </button>
                   )}
 
-                  {/* Watch progress bar */}
                   {progressPct > 0 && (
                     <div className="absolute bottom-0 inset-x-0 h-1 bg-white/20">
                       <div className="h-full bg-[#00a0e9]" style={{ width: `${progressPct}%` }} />
@@ -230,7 +258,6 @@ export default function HomeView({ shows, onSelectShow, watchProgress, userRatin
                     </div>
                   )}
 
-                  {/* Play overlay */}
                   {!show.comingSoon && (
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center">
@@ -239,15 +266,12 @@ export default function HomeView({ shows, onSelectShow, watchProgress, userRatin
                     </div>
                   )}
 
-                  {/* Notified dot */}
                   {notified.has(show.id) && (
                     <div className="absolute top-2 right-2 w-2 h-2 bg-[#00a0e9] rounded-full shadow-[0_0_6px_rgba(0,160,233,0.8)]" />
                   )}
                 </div>
 
                 <h3 className="text-sm font-bold leading-tight line-clamp-2 mb-0.5">{show.title}</h3>
-
-                {/* Rating stars (if rated) */}
                 {rating != null ? (
                   <div className="flex items-center gap-0.5 mb-0.5">
                     {[1,2,3,4,5].map(n => (

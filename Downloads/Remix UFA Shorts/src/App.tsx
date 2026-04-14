@@ -21,6 +21,15 @@ export default function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [hasSeenOnboarding] = useState(() => localStorage.getItem('ufaShortsOnboarding') === 'done');
   const [showOnboarding, setShowOnboarding] = useState(!hasSeenOnboarding);
+  const [streak, setStreak] = useState<number>(() => {
+    try {
+      const d = JSON.parse(localStorage.getItem('ufaShortsStreak') || '{"count":0,"lastDate":null}');
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      const today = new Date().toDateString();
+      if (d.lastDate === today || d.lastDate === yesterday) return d.count;
+      return 0;
+    } catch { return 0; }
+  });
 
   const [user, setUser] = useState<User>({
     coins: 50,
@@ -85,6 +94,18 @@ export default function App() {
     setUser(prev => ({ ...prev, avatarUrl: url }));
   };
 
+  const updateStreak = () => {
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    try {
+      const d = JSON.parse(localStorage.getItem('ufaShortsStreak') || '{"count":0,"lastDate":null}');
+      if (d.lastDate === today) return; // already counted today
+      const newCount = d.lastDate === yesterday ? d.count + 1 : 1;
+      localStorage.setItem('ufaShortsStreak', JSON.stringify({ count: newCount, lastDate: today }));
+      setStreak(newCount);
+    } catch { setStreak(1); }
+  };
+
   return (
     <div className="h-screen w-full bg-black text-white overflow-hidden font-sans flex flex-col">
       {/* ── Onboarding ── */}
@@ -115,6 +136,7 @@ export default function App() {
           onToggleWatchlist={() => toggleWatchlist(selectedShow)}
           onWatchProgress={(idx) => handleWatchProgress(selectedShow.id, idx)}
           onRate={(rating) => handleRate(selectedShow.id, rating)}
+          onUpdateStreak={updateStreak}
         />
       ) : (
         <>
@@ -132,6 +154,7 @@ export default function App() {
             {activeTab === 'profile' && (
               <ProfileView
                 user={user}
+                streak={streak}
                 onOpenCoinModal={() => setIsCoinModalOpen(true)}
                 onOpenVipModal={() => setIsVipModalOpen(true)}
                 onUpdateAvatar={handleUpdateAvatar}

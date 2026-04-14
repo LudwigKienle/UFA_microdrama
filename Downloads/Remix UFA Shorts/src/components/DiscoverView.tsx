@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Play, TrendingUp, Sparkles, X } from 'lucide-react';
+import { Search, Play, TrendingUp, Sparkles, X, Clock, Flame } from 'lucide-react';
 import { MOCK_SHOWS } from '../data';
 import { Show } from '../types';
 
@@ -8,35 +8,71 @@ interface DiscoverViewProps {
 }
 
 const GENRES = [
-  { label: 'Romantik', from: 'from-pink-600',   to: 'to-rose-900',   emoji: '💕' },
-  { label: 'Drama',    from: 'from-purple-700',  to: 'to-indigo-900', emoji: '🎭' },
-  { label: 'Fantasy',  from: 'from-violet-600',  to: 'to-purple-900', emoji: '✨' },
-  { label: 'Comedy',   from: 'from-yellow-500',  to: 'to-orange-700', emoji: '😂' },
-  { label: 'Thriller', from: 'from-gray-700',    to: 'to-gray-950',   emoji: '🔪' },
-  { label: 'Action',   from: 'from-red-600',     to: 'to-red-950',    emoji: '💥' },
-  { label: 'Sci-Fi',   from: 'from-cyan-600',    to: 'to-blue-900',   emoji: '🚀' },
-  { label: 'Horror',   from: 'from-green-800',   to: 'to-gray-950',   emoji: '👻' },
+  { label: 'Romantik', from: 'from-pink-600',  to: 'to-rose-900',   emoji: '💕', tag: 'Romantik' },
+  { label: 'Drama',    from: 'from-purple-700', to: 'to-indigo-900', emoji: '🎭', tag: 'Drama' },
+  { label: 'Fantasy',  from: 'from-violet-600', to: 'to-purple-900', emoji: '✨', tag: 'Fantasy' },
+  { label: 'Comedy',   from: 'from-yellow-500', to: 'to-orange-700', emoji: '😂', tag: 'Comedy' },
+  { label: 'Thriller', from: 'from-gray-700',   to: 'to-gray-950',   emoji: '🔪', tag: 'Thriller' },
+  { label: 'Action',   from: 'from-red-600',    to: 'to-red-950',    emoji: '💥', tag: 'Action' },
+  { label: 'Sci-Fi',   from: 'from-cyan-600',   to: 'to-blue-900',   emoji: '🚀', tag: 'Sci-Fi' },
+  { label: 'Horror',   from: 'from-green-800',  to: 'to-gray-950',   emoji: '👻', tag: 'Horror' },
 ];
 
+const MAX_HISTORY = 5;
+
+function loadHistory(): string[] {
+  try { return JSON.parse(localStorage.getItem('ufaShortsSearchHistory') || '[]'); }
+  catch { return []; }
+}
+
+function saveHistory(history: string[]) {
+  try { localStorage.setItem('ufaShortsSearchHistory', JSON.stringify(history)); }
+  catch { }
+}
+
 export default function DiscoverView({ onSelectShow }: DiscoverViewProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery]     = useState('');
+  const [searchHistory, setSearchHistory] = useState<string[]>(loadHistory);
+  const [activeGenre, setActiveGenre]     = useState<string | null>(null);
 
   const trendingShows = MOCK_SHOWS.slice(1, 5);
 
+  // Live search results
   const searchResults = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return null;
-    const matchedShows = MOCK_SHOWS.filter(s =>
-      s.title.toLowerCase().includes(q) ||
-      s.tags.some(t => t.toLowerCase().includes(q)) ||
-      s.description.toLowerCase().includes(q)
-    );
-    const matchedGenres = GENRES.filter(g => g.label.toLowerCase().includes(q));
-    return { shows: matchedShows, genres: matchedGenres };
+    return {
+      shows:  MOCK_SHOWS.filter(s =>
+        s.title.toLowerCase().includes(q) ||
+        s.tags.some(t => t.toLowerCase().includes(q)) ||
+        s.description.toLowerCase().includes(q)
+      ),
+      genres: GENRES.filter(g => g.label.toLowerCase().includes(q)),
+    };
   }, [searchQuery]);
 
-  const hasResults = searchResults && (searchResults.shows.length > 0 || searchResults.genres.length > 0);
-  const noResults = searchResults && !hasResults;
+  // Genre-filtered trending
+  const filteredTrending = activeGenre
+    ? trendingShows.filter(s => s.tags.some(t => t.toLowerCase() === activeGenre.toLowerCase()))
+    : trendingShows;
+
+  const commitSearch = (q: string) => {
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    const updated = [trimmed, ...searchHistory.filter(h => h !== trimmed)].slice(0, MAX_HISTORY);
+    setSearchHistory(updated);
+    saveHistory(updated);
+  };
+
+  const removeHistory = (item: string) => {
+    const updated = searchHistory.filter(h => h !== item);
+    setSearchHistory(updated);
+    saveHistory(updated);
+  };
+
+  const pickHistory = (item: string) => setSearchQuery(item);
+
+  const noResults = searchResults && searchResults.shows.length === 0 && searchResults.genres.length === 0;
 
   return (
     <div className="h-full flex flex-col bg-black overflow-y-auto pb-20 scrollbar-hide">
@@ -56,6 +92,8 @@ export default function DiscoverView({ onSelectShow }: DiscoverViewProps) {
             placeholder="Serien, Genres, Schauspieler..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && commitSearch(searchQuery)}
+            onBlur={() => commitSearch(searchQuery)}
             className="bg-transparent border-none outline-none text-sm text-white w-full placeholder-gray-500"
           />
           {searchQuery.length > 0 && (
@@ -67,6 +105,7 @@ export default function DiscoverView({ onSelectShow }: DiscoverViewProps) {
       </div>
 
       <div className="px-4 space-y-6 mt-1">
+
         {/* ── Search Results ── */}
         {searchResults && (
           <>
@@ -77,10 +116,11 @@ export default function DiscoverView({ onSelectShow }: DiscoverViewProps) {
                 <p className="text-gray-600 text-sm mt-1">Versuch einen anderen Suchbegriff</p>
               </div>
             )}
-
             {searchResults.shows.length > 0 && (
               <div>
-                <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3">Serien ({searchResults.shows.length})</p>
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3">
+                  Serien ({searchResults.shows.length})
+                </p>
                 <div className="space-y-3">
                   {searchResults.shows.map(show => (
                     <SearchShowCard key={show.id} show={show} onSelectShow={onSelectShow} />
@@ -88,10 +128,11 @@ export default function DiscoverView({ onSelectShow }: DiscoverViewProps) {
                 </div>
               </div>
             )}
-
             {searchResults.genres.length > 0 && (
               <div>
-                <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3">Genres ({searchResults.genres.length})</p>
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3">
+                  Genres ({searchResults.genres.length})
+                </p>
                 <div className="grid grid-cols-2 gap-3">
                   {searchResults.genres.map(genre => (
                     <button
@@ -108,9 +149,45 @@ export default function DiscoverView({ onSelectShow }: DiscoverViewProps) {
           </>
         )}
 
-        {/* ── Default: Trending + Genres ── */}
+        {/* ── Default view ── */}
         {!searchResults && (
           <>
+            {/* Search history */}
+            {searchHistory.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5 text-gray-400">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Zuletzt gesucht</span>
+                  </div>
+                  <button
+                    onClick={() => { setSearchHistory([]); saveHistory([]); }}
+                    className="text-gray-600 text-xs hover:text-gray-400 transition-colors"
+                  >
+                    Alle löschen
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {searchHistory.map(item => (
+                    <div key={item} className="flex items-center gap-1 bg-gray-900/80 border border-white/8 rounded-full pl-3 pr-2 py-1.5">
+                      <button
+                        onClick={() => pickHistory(item)}
+                        className="text-white text-sm font-medium"
+                      >
+                        {item}
+                      </button>
+                      <button
+                        onClick={() => removeHistory(item)}
+                        className="text-gray-600 hover:text-gray-300 transition-colors ml-1"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Trending */}
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -118,16 +195,50 @@ export default function DiscoverView({ onSelectShow }: DiscoverViewProps) {
                   <TrendingUp className="w-5 h-5 text-red-500" />
                   <h2 className="text-lg font-black text-white">Im Trend</h2>
                 </div>
-                <button className="text-[#00a0e9] text-xs font-bold">Alle anzeigen</button>
               </div>
-              <div className="space-y-3">
-                {trendingShows.map((show, index) => (
-                  <SearchShowCard key={show.id} show={show} onSelectShow={onSelectShow} rank={index + 1} />
+
+              {/* Genre filter chips */}
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-3 pb-0.5">
+                <button
+                  onClick={() => setActiveGenre(null)}
+                  className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                    activeGenre === null
+                      ? 'bg-[#00a0e9] border-[#00a0e9] text-white'
+                      : 'bg-gray-900 border-white/10 text-gray-400'
+                  }`}
+                >
+                  <Flame className="w-3 h-3" />
+                  Alle
+                </button>
+                {GENRES.slice(0, 6).map(g => (
+                  <button
+                    key={g.label}
+                    onClick={() => setActiveGenre(activeGenre === g.tag ? null : g.tag)}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                      activeGenre === g.tag
+                        ? 'bg-[#00a0e9] border-[#00a0e9] text-white'
+                        : 'bg-gray-900 border-white/10 text-gray-400'
+                    }`}
+                  >
+                    {g.emoji} {g.label}
+                  </button>
                 ))}
               </div>
+
+              {filteredTrending.length > 0 ? (
+                <div className="space-y-3">
+                  {filteredTrending.map((show, index) => (
+                    <SearchShowCard key={show.id} show={show} onSelectShow={onSelectShow} rank={index + 1} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-600 text-sm">
+                  Keine Serien in diesem Genre im Trend.
+                </div>
+              )}
             </div>
 
-            {/* Genres */}
+            {/* Genre grid */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles className="w-5 h-5 text-yellow-500" />
@@ -137,7 +248,10 @@ export default function DiscoverView({ onSelectShow }: DiscoverViewProps) {
                 {GENRES.map((genre) => (
                   <button
                     key={genre.label}
-                    className={`bg-gradient-to-br ${genre.from} ${genre.to} rounded-2xl p-4 flex items-center gap-3 border border-white/10 active:scale-95 transition-transform shadow-lg`}
+                    onClick={() => setActiveGenre(activeGenre === genre.tag ? null : genre.tag)}
+                    className={`bg-gradient-to-br ${genre.from} ${genre.to} rounded-2xl p-4 flex items-center gap-3 border transition-all active:scale-95 shadow-lg ${
+                      activeGenre === genre.tag ? 'border-white/40 scale-[0.97]' : 'border-white/10'
+                    }`}
                   >
                     <span className="text-2xl">{genre.emoji}</span>
                     <span className="text-white font-bold text-sm">{genre.label}</span>
@@ -152,11 +266,7 @@ export default function DiscoverView({ onSelectShow }: DiscoverViewProps) {
   );
 }
 
-function SearchShowCard({
-  show,
-  onSelectShow,
-  rank,
-}: { show: Show; onSelectShow: (s: Show) => void; rank?: number } & React.Attributes) {
+function SearchShowCard({ show, onSelectShow, rank }: { show: Show; onSelectShow: (s: Show) => void; rank?: number }) {
   return (
     <div
       className="flex gap-3 bg-gray-900/60 rounded-2xl p-3 border border-white/5 active:bg-gray-800/60 transition-colors cursor-pointer"
