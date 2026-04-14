@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Video-Dateien (zu groß für GitHub)
+public/*.mp4
+public/*.mov

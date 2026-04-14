@@ -36,7 +36,12 @@ export const MOCK_SHOWS: Show[] = [
     views: '2.1M',
     tags: ['Drama', 'Fußball'],
     badge: 'Neu',
-    episodes: generateEpisodes('1', 20),
+    episodes: generateEpisodes('1', 20, {
+      2: '/Folge2Zwischenstand.mp4',
+      3: '/Timeline 2.mov',
+      4: '/Folge4Zwischenstand.mov',
+      6: '/Folge_06.mov',
+    }),
   },
   {
     id: '7',
